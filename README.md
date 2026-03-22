@@ -1,6 +1,6 @@
 # 🤖 Robotics Assignment — URDF & Xacro Models
 
-**By Haruto**
+**Made by Haruto**
 
 This repository contains URDF and Xacro descriptions for various robot models, created as part of a Robotics assignment. Each model includes full `<visual>`, `<collision>`, and `<inertial>` definitions and can be visualized in **RViz2** (ROS 2 Humble).
 
