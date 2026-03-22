@@ -1,0 +1,354 @@
+<?xml version="1.0"?>
+<!--
+  Indoor Delivery Robot — Xacro
+  ==============================
+  Base platform : 0.65 x 0.45 x 0.20 m
+  Cargo box     : 0.30 x 0.25 x 0.20 m  (fixed, on top)
+  Drive wheels  : r=0.10 m, w=0.05 m     (continuous, diff-drive)
+  Front caster  : r=0.05 m sphere        (continuous, free-spinning)
+  Lidar         : 0.55 m above ground    (fixed)
+  Camera        : front face of base     (fixed)
+  Battery       : centred inside base    (fixed)
+  Density       : 1000 kg/m³
+
+  TF tree:
+    base_link
+    ├─ left_wheel_joint  (continuous)  → left_wheel
+    ├─ right_wheel_joint (continuous)  → right_wheel
+    ├─ caster_joint      (continuous)  → caster_wheel
+    ├─ cargo_joint       (fixed)       → cargo_link
+    ├─ lidar_joint       (fixed)       → lidar_link
+    ├─ camera_joint      (fixed)       → camera_link
+    └─ battery_joint     (fixed)       → battery_link
+-->
+<robot name="delivery_robot"
+       xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============================================================ -->
+  <!--  PROPERTIES                                                   -->
+  <!-- ============================================================ -->
+
+  <!-- Base platform -->
+  <xacro:property name="base_x"      value="0.65"/>
+  <xacro:property name="base_y"      value="0.45"/>
+  <xacro:property name="base_z"      value="0.20"/>
+  <xacro:property name="base_mass"   value="58.50"/>  <!-- 1000 × 0.65 × 0.45 × 0.20 -->
+
+  <!-- Drive wheels -->
+  <xacro:property name="wheel_radius" value="0.10"/>
+  <xacro:property name="wheel_width"  value="0.05"/>
+  <xacro:property name="wheel_mass"   value="1.5708"/>  <!-- ρπr²l -->
+
+  <!-- Caster -->
+  <xacro:property name="caster_radius" value="0.05"/>
+  <xacro:property name="caster_mass"   value="0.5236"/>  <!-- ρ·(4/3)πr³ -->
+
+  <!-- Cargo box -->
+  <xacro:property name="cargo_x"    value="0.30"/>
+  <xacro:property name="cargo_y"    value="0.25"/>
+  <xacro:property name="cargo_z"    value="0.20"/>
+  <xacro:property name="cargo_mass" value="15.0"/>  <!-- 1000 × 0.30 × 0.25 × 0.20 -->
+
+  <!-- Lidar -->
+  <xacro:property name="lidar_radius" value="0.03"/>
+  <xacro:property name="lidar_height" value="0.04"/>
+  <xacro:property name="lidar_mass"   value="0.1131"/>
+  <xacro:property name="lidar_z"      value="0.55"/>  <!-- above ground -->
+
+  <!-- Camera -->
+  <xacro:property name="camera_x"    value="0.04"/>
+  <xacro:property name="camera_y"    value="0.06"/>
+  <xacro:property name="camera_z"    value="0.04"/>
+  <xacro:property name="camera_mass" value="0.096"/>
+
+  <!-- Battery -->
+  <xacro:property name="battery_x"    value="0.20"/>
+  <xacro:property name="battery_y"    value="0.15"/>
+  <xacro:property name="battery_z"    value="0.08"/>
+  <xacro:property name="battery_mass" value="2.40"/>
+
+  <!-- ============================================================ -->
+  <!--  MACROS                                                       -->
+  <!-- ============================================================ -->
+
+  <!-- Inertia: solid box -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertia ixx="${(m/12.0)*(y*y + z*z)}" ixy="0" ixz="0"
+             iyy="${(m/12.0)*(x*x + z*z)}" iyz="0"
+             izz="${(m/12.0)*(x*x + y*y)}"/>
+  </xacro:macro>
+
+  <!-- Inertia: solid cylinder (axis along Y after rotation) -->
+  <xacro:macro name="cylinder_inertia_y" params="m r l">
+    <inertia ixx="${(m/12.0)*(3*r*r + l*l)}" ixy="0" ixz="0"
+             iyy="${(m/2.0)*r*r}"            iyz="0"
+             izz="${(m/12.0)*(3*r*r + l*l)}"/>
+  </xacro:macro>
+
+  <!-- Inertia: solid cylinder (axis along Z — default) -->
+  <xacro:macro name="cylinder_inertia_z" params="m r l">
+    <inertia ixx="${(m/12.0)*(3*r*r + l*l)}" ixy="0" ixz="0"
+             iyy="${(m/12.0)*(3*r*r + l*l)}" iyz="0"
+             izz="${(m/2.0)*r*r}"/>
+  </xacro:macro>
+
+  <!-- Inertia: solid sphere -->
+  <xacro:macro name="sphere_inertia" params="m r">
+    <inertia ixx="${(2.0/5.0)*m*r*r}" ixy="0" ixz="0"
+             iyy="${(2.0/5.0)*m*r*r}" iyz="0"
+             izz="${(2.0/5.0)*m*r*r}"/>
+  </xacro:macro>
+
+  <!-- Reusable drive-wheel macro -->
+  <xacro:macro name="drive_wheel" params="name y_offset">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="dark_grey">
+          <color rgba="0.15 0.15 0.15 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${wheel_mass}"/>
+        <xacro:cylinder_inertia_y m="${wheel_mass}" r="${wheel_radius}" l="${wheel_width}"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}"/>
+      <!-- x = -0.10 (slightly behind centre for stability), y = offset, z = wheel_radius -->
+      <origin xyz="-0.10 ${y_offset} ${wheel_radius}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ============================================================ -->
+  <!--  BASE LINK                                                    -->
+  <!-- ============================================================ -->
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_x} ${base_y} ${base_z}"/>
+      </geometry>
+      <material name="teal">
+        <color rgba="0.18 0.55 0.60 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_x} ${base_y} ${base_z}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+      <mass value="${base_mass}"/>
+      <xacro:box_inertia m="${base_mass}" x="${base_x}" y="${base_y}" z="${base_z}"/>
+    </inertial>
+  </link>
+
+  <!-- ============================================================ -->
+  <!--  DRIVE WHEELS  (continuous)                                   -->
+  <!-- ============================================================ -->
+
+  <!-- Inner face of wheel flush with base side -->
+  <xacro:drive_wheel name="left_wheel"  y_offset="${ base_y/2 + wheel_width/2}"/>
+  <xacro:drive_wheel name="right_wheel" y_offset="${-base_y/2 - wheel_width/2}"/>
+
+  <!-- ============================================================ -->
+  <!--  FRONT CASTER WHEEL  (continuous, free-spinning)              -->
+  <!-- ============================================================ -->
+
+  <link name="caster_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_radius}"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.4 0.4 0.4 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_radius}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${caster_mass}"/>
+      <xacro:sphere_inertia m="${caster_mass}" r="${caster_radius}"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="caster_wheel"/>
+    <!-- Front of base, ground-touching: z = caster_radius -->
+    <origin xyz="${base_x/2 - caster_radius} 0 ${caster_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- ============================================================ -->
+  <!--  CARGO BOX  (fixed, on top of base)                           -->
+  <!-- ============================================================ -->
+
+  <link name="cargo_link">
+    <visual>
+      <origin xyz="0 0 ${cargo_z/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${cargo_x} ${cargo_y} ${cargo_z}"/>
+      </geometry>
+      <material name="brown">
+        <color rgba="0.55 0.35 0.15 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${cargo_z/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${cargo_x} ${cargo_y} ${cargo_z}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 ${cargo_z/2}" rpy="0 0 0"/>
+      <mass value="${cargo_mass}"/>
+      <xacro:box_inertia m="${cargo_mass}" x="${cargo_x}" y="${cargo_y}" z="${cargo_z}"/>
+    </inertial>
+  </link>
+
+  <joint name="cargo_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="cargo_link"/>
+    <!-- Sits on top of the base platform -->
+    <origin xyz="0 0 ${wheel_radius + base_z/2}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================ -->
+  <!--  LIDAR  (fixed, 0.55 m above ground)                         -->
+  <!-- ============================================================ -->
+
+  <link name="lidar_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.05 0.05 0.05 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${lidar_mass}"/>
+      <xacro:cylinder_inertia_z m="${lidar_mass}" r="${lidar_radius}" l="${lidar_height}"/>
+    </inertial>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <!-- 0.55 m above ground -->
+    <origin xyz="0 0 ${lidar_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================ -->
+  <!--  CAMERA  (fixed, front face of base)                          -->
+  <!-- ============================================================ -->
+
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${camera_x} ${camera_y} ${camera_z}"/>
+      </geometry>
+      <material name="red">
+        <color rgba="0.75 0.10 0.10 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${camera_x} ${camera_y} ${camera_z}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${camera_mass}"/>
+      <xacro:box_inertia m="${camera_mass}" x="${camera_x}" y="${camera_y}" z="${camera_z}"/>
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <!-- Mounted on the front face, upper half of the base -->
+    <origin xyz="${base_x/2 + camera_x/2} 0 ${wheel_radius + base_z*0.25}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================ -->
+  <!--  BATTERY  (fixed, centred inside the base)                    -->
+  <!-- ============================================================ -->
+
+  <link name="battery_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${battery_x} ${battery_y} ${battery_z}"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0.20 0.65 0.20 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${battery_x} ${battery_y} ${battery_z}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${battery_mass}"/>
+      <xacro:box_inertia m="${battery_mass}" x="${battery_x}" y="${battery_y}" z="${battery_z}"/>
+    </inertial>
+  </link>
+
+  <joint name="battery_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="battery_link"/>
+    <!-- Centred inside the base platform -->
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
+</robot>

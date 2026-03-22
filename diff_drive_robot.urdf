@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<!--
+  Differential Drive Mobile Robot URDF
+  =====================================
+  Base:  Box  0.60 x 0.40 x 0.20 m
+  Wheels: Cylinder  radius 0.10 m, width 0.05 m
+  Wheel separation: 0.40 m (centre-to-centre along Y)
+  Density: 1000 kg/m³ (standard / water density)
+
+  Convention:
+    base_link origin is at ground level, directly below the centre of
+    the chassis.  Visual / collision / inertial origins are shifted so
+    the robot sits correctly on the z = 0 ground plane.
+-->
+<robot name="diff_drive_robot">
+
+  <!-- ==================== BASE LINK ==================== -->
+  <link name="base_link">
+
+    <!-- Visual -->
+    <visual>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.60 0.40 0.20"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0.2 0.4 0.8 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Collision -->
+    <collision>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.60 0.40 0.20"/>
+      </geometry>
+    </collision>
+
+    <!--
+      Inertial  (solid box, m = ρ·V = 1000 × 0.60 × 0.40 × 0.20 = 48.0 kg)
+      Ixx = m/12 (dy² + dz²) = 4.0 × 0.20  = 0.80
+      Iyy = m/12 (dx² + dz²) = 4.0 × 0.40  = 1.60
+      Izz = m/12 (dx² + dy²) = 4.0 × 0.52  = 2.08
+    -->
+    <inertial>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
+      <mass value="48.0"/>
+      <inertia ixx="0.80" ixy="0" ixz="0"
+               iyy="1.60" iyz="0"
+               izz="2.08"/>
+    </inertial>
+
+  </link>
+
+  <!-- ==================== LEFT WHEEL ==================== -->
+  <link name="left_wheel">
+
+    <!-- Visual (cylinder default axis is Z; rotate -π/2 about X to align with Y) -->
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.10" length="0.05"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Collision -->
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.10" length="0.05"/>
+      </geometry>
+    </collision>
+
+    <!--
+      Inertial  (solid cylinder, m = ρ·π·r²·l = 1000 × π × 0.01 × 0.05 ≈ 1.5708 kg)
+      Rotation axis is Y after visual rotation, so inertia is expressed
+      with the cylinder axis along Y in the link frame.
+      Iyy = m/2 · r²                = 0.007854
+      Ixx = Izz = m/12 · (3r² + l²) = 0.004255
+    -->
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.5708"/>
+      <inertia ixx="0.004255" ixy="0" ixz="0"
+               iyy="0.007854" iyz="0"
+               izz="0.004255"/>
+    </inertial>
+
+  </link>
+
+  <!-- ==================== RIGHT WHEEL ==================== -->
+  <link name="right_wheel">
+
+    <!-- Visual -->
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.10" length="0.05"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Collision -->
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.10" length="0.05"/>
+      </geometry>
+    </collision>
+
+    <!--
+      Inertial  (same as left wheel)
+    -->
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.5708"/>
+      <inertia ixx="0.004255" ixy="0" ixz="0"
+               iyy="0.007854" iyz="0"
+               izz="0.004255"/>
+    </inertial>
+
+  </link>
+
+  <!-- ==================== JOINTS ==================== -->
+
+  <!-- Left wheel joint (continuous, rotation about Y axis) -->
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <!-- Wheel centre at: x=0, y=+0.20 (half of 0.40 separation), z=0.10 (wheel radius) -->
+    <origin xyz="0 0.20 0.10" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- Right wheel joint (continuous, rotation about Y axis) -->
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <!-- Wheel centre at: x=0, y=-0.20 (half of 0.40 separation), z=0.10 (wheel radius) -->
+    <origin xyz="0 -0.20 0.10" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+</robot>
