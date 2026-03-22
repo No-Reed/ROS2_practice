@@ -1,209 +1,62 @@
 <?xml version="1.0"?>
-<!--
-  Four-Wheel Service Robot URDF
-  ==============================
-  Base:   Box      0.70 x 0.50 x 0.25 m
-  Wheels: Cylinder radius 0.12 m, width 0.05 m
-  Density: 1000 kg/m³
+<robot name="four_wheel_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  Wheel placement:
-    X = ±(base_length / 2)           = ±0.35 m   (front / rear edges)
-    Y = ±(base_width / 2 + width/2)  = ±0.275 m  (inner face flush with base side)
-    Z = wheel_radius                  =  0.12 m   (bottom at ground)
-
-  base_link origin is at ground level (z = 0).
--->
-<robot name="four_wheel_service_robot">
-
-  <!-- ==================== BASE LINK ==================== -->
+  <!-- ================= BASE ================= -->
   <link name="base_link">
-
     <visual>
-      <origin xyz="0 0 0.125" rpy="0 0 0"/>
+      <origin xyz="0 0 0.125"/>
       <geometry>
         <box size="0.70 0.50 0.25"/>
       </geometry>
-      <material name="blue">
-        <color rgba="0.15 0.35 0.75 1.0"/>
-      </material>
     </visual>
-
     <collision>
-      <origin xyz="0 0 0.125" rpy="0 0 0"/>
+      <origin xyz="0 0 0.125"/>
       <geometry>
         <box size="0.70 0.50 0.25"/>
       </geometry>
     </collision>
-
     <inertial>
-      <origin xyz="0 0 0.125" rpy="0 0 0"/>
+      <origin xyz="0 0 0.125"/>
       <mass value="87.5"/>
-      <inertia ixx="2.2786" ixy="0" ixz="0"
-               iyy="4.0287" iyz="0"
-               izz="5.3958"/>
+      <inertia ixx="2.2" iyy="4.0" izz="5.3" ixy="0" ixz="0" iyz="0"/>
     </inertial>
-
   </link>
 
-  <!-- ==================== FRONT LEFT WHEEL ==================== -->
-  <link name="front_left_wheel">
+  <!-- ================= WHEEL MACRO ================= -->
+  <xacro:macro name="wheel" params="name x y">
 
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-      <material name="dark_grey">
-        <color rgba="0.2 0.2 0.2 1.0"/>
-      </material>
-    </visual>
+    <link name="${name}">
+      <visual>
+        <origin rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="0.12" length="0.05"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="0.12" length="0.05"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="2.26"/>
+        <inertia ixx="0.008" iyy="0.016" izz="0.008" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
 
-    <collision>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-    </collision>
+    <joint name="${name}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}"/>
+      <origin xyz="${x} ${y} 0.12"/>
+      <axis xyz="0 1 0"/>
+    </joint>
 
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="2.2619"/>
-      <inertia ixx="0.008614" ixy="0" ixz="0"
-               iyy="0.016286" iyz="0"
-               izz="0.008614"/>
-    </inertial>
+  </xacro:macro>
 
-  </link>
-
-  <!-- ==================== FRONT RIGHT WHEEL ==================== -->
-  <link name="front_right_wheel">
-
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-      <material name="dark_grey">
-        <color rgba="0.2 0.2 0.2 1.0"/>
-      </material>
-    </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-    </collision>
-
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="2.2619"/>
-      <inertia ixx="0.008614" ixy="0" ixz="0"
-               iyy="0.016286" iyz="0"
-               izz="0.008614"/>
-    </inertial>
-
-  </link>
-
-  <!-- ==================== REAR LEFT WHEEL ==================== -->
-  <link name="rear_left_wheel">
-
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-      <material name="dark_grey">
-        <color rgba="0.2 0.2 0.2 1.0"/>
-      </material>
-    </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-    </collision>
-
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="2.2619"/>
-      <inertia ixx="0.008614" ixy="0" ixz="0"
-               iyy="0.016286" iyz="0"
-               izz="0.008614"/>
-    </inertial>
-
-  </link>
-
-  <!-- ==================== REAR RIGHT WHEEL ==================== -->
-  <link name="rear_right_wheel">
-
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-      <material name="dark_grey">
-        <color rgba="0.2 0.2 0.2 1.0"/>
-      </material>
-    </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.12" length="0.05"/>
-      </geometry>
-    </collision>
-
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="2.2619"/>
-      <inertia ixx="0.008614" ixy="0" ixz="0"
-               iyy="0.016286" iyz="0"
-               izz="0.008614"/>
-    </inertial>
-
-  </link>
-
-  <!-- ==================== JOINTS ==================== -->
-
-  <!--
-    Wheel offset calculation:
-      X = ±(base_length / 2)          = ±0.35  (front / rear edge)
-      Y = ±(base_width/2 + width/2)   = ±0.275 (inner face flush with base side)
-      Z =   wheel_radius              =  0.12  (bottom touches ground)
-  -->
-
-  <!-- Front Left -->
-  <joint name="front_left_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="front_left_wheel"/>
-    <origin xyz="0.35 0.275 0.12" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
-
-  <!-- Front Right -->
-  <joint name="front_right_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="front_right_wheel"/>
-    <origin xyz="0.35 -0.275 0.12" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
-
-  <!-- Rear Left -->
-  <joint name="rear_left_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="rear_left_wheel"/>
-    <origin xyz="-0.35 0.275 0.12" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
-
-  <!-- Rear Right -->
-  <joint name="rear_right_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="rear_right_wheel"/>
-    <origin xyz="-0.35 -0.275 0.12" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
+  <!-- ================= CALL MACRO ================= -->
+  <xacro:wheel name="front_left_wheel"  x="0.35"  y="0.275"/>
+  <xacro:wheel name="front_right_wheel" x="0.35"  y="-0.275"/>
+  <xacro:wheel name="rear_left_wheel"   x="-0.35" y="0.275"/>
+  <xacro:wheel name="rear_right_wheel"  x="-0.35" y="-0.275"/>
 
 </robot>
